@@ -280,5 +280,214 @@ MySQL DB Connected
 Server Running on port 8080
 ```
 
-Your **Node.js + Express + MySQL** setup is complete! 🚀
+# Node.js + MySQL CRUD Operations
+
+## Project Structure
+
+```
+NODE+MYSQL+CRUD/
+│-- config/
+│   ├── db.js
+│-- controllers/
+│   ├── studentController.js
+│-- routes/
+│   ├── studentRoutes.js
+│-- node_modules/
+│-- .env
+│-- package.json
+│-- package-lock.json
+│-- server.js
+```
+
+## Step 1: Configure Database Connection (`config/db.js`)
+```javascript
+const mysql = require("mysql2/promise");
+const dotenv = require("dotenv");
+
+// Configure dotenv
+dotenv.config();
+
+const pool = mysql.createPool({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASS,
+    database: process.env.DB_NAME,
+    waitForConnections: true,
+    connectionLimit: 10,
+    queueLimit: 0
+});
+
+module.exports = pool;
+```
+
+## Step 2: Create Controller (`controllers/studentController.js`)
+```javascript
+const db = require("../config/db");
+
+// GET ALL STUDENTS LIST
+const getStudents = async (req, res) => {
+    try {
+        const [data] = await db.query('SELECT * FROM students');
+        if (data.length === 0) {
+            return res.status(404).send({
+                success: false,
+                message: 'No Records found'
+            });
+        }
+        res.status(200).send({
+            success: true,
+            message: 'All Students Records',
+            data
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({
+            success: false,
+            message: 'Error in Get All Student API',
+            error
+        });
+    }
+};
+
+// GET STUDENT BY ID
+const getStudentsByID = async (req, res) => {
+    try {
+        const studentId = req.params.id;
+        const [data] = await db.query('SELECT * FROM students WHERE id=?', [studentId]);
+        if (data.length === 0) {
+            return res.status(404).send({ success: false, message: 'No record found' });
+        }
+        res.status(200).send({ success: true, studentDetails: data[0] });
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({ success: false, message: 'Error in Get Student by ID API', error });
+    }
+};
+
+// CREATE STUDENT
+const createStudent = async (req, res) => {
+    try {
+        const { name, roll_no, fees, grade, medium } = req.body;
+        if (!name || !roll_no || !fees || !grade || !medium) {
+            return res.status(400).send({ success: false, message: 'Please provide all fields' });
+        }
+        await db.query('INSERT INTO students (name, roll_no, fees, grade, medium) VALUES (?, ?, ?, ?, ?)', [name, roll_no, fees, grade, medium]);
+        res.status(201).send({ success: true, message: 'Student created successfully' });
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({ success: false, message: 'Error in create student API', error });
+    }
+};
+
+// UPDATE STUDENT
+const updateStudent = async (req, res) => {
+    try {
+        const studentId = req.params.id;
+        const { name, roll_no, grade, fees, medium } = req.body;
+        await db.query('UPDATE students SET name = ?, roll_no = ?, fees = ?, grade = ?, medium = ? WHERE id = ?', [name, roll_no, fees, grade, medium, studentId]);
+        res.status(200).send({ success: true, message: 'Student Details Updated' });
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({ success: false, message: 'Error in Update Student API', error });
+    }
+};
+
+// DELETE STUDENT
+const deleteStudent = async (req, res) => {
+    try {
+        const studentId = req.params.id;
+        await db.query('DELETE FROM students WHERE id = ?', [studentId]);
+        res.status(200).send({ success: true, message: 'Student Deleted Successfully' });
+    } catch (error) {
+        console.log(error);
+        res.status(500).send({ success: false, message: 'Error in Delete Student API', error });
+    }
+};
+
+module.exports = { getStudents, getStudentsByID, createStudent, updateStudent, deleteStudent };
+```
+
+## Step 3: Define Routes (`routes/studentRoutes.js`)
+```javascript
+const express = require('express');
+const { getStudents, getStudentsByID, createStudent, updateStudent, deleteStudent } = require('../controllers/studentController');
+
+const router = express.Router();
+
+// Routes
+router.get('/getall', getStudents);
+router.get('/get/:id', getStudentsByID);
+router.post('/create', createStudent);
+router.put('/update/:id', updateStudent);
+router.delete('/delete/:id', deleteStudent);
+
+module.exports = router;
+```
+
+## Step 4: Configure Server (`server.js`)
+```javascript
+const express = require("express");
+const dotenv = require("dotenv");
+const mySqlPool = require("./config/db");
+
+// Configure dotenv
+dotenv.config();
+
+const app = express();
+
+// Middleware
+app.use(express.json());
+
+// Routes
+app.use("/api/v1/student", require("./routes/studentRoutes"));
+
+app.get("/test", (req, res) => {
+    res.status(200).send("<h1>Node.js MySQL App</h1>");
+});
+
+const port = process.env.PORT || 8000;
+
+// Connect to MySQL and start server
+mySqlPool.query('SELECT 1').then(() => {
+    console.log('MySQL DB Connected');
+    app.listen(port, () => {
+        console.log(`Server Running on port ${port}`);
+    });
+}).catch((error) => {
+    console.log(error);
+});
+```
+
+## Step 5: Setup Environment Variables (`.env`)
+```plaintext
+PORT=8080
+DB_HOST=localhost
+DB_USER=root
+DB_PASS=yourpassword
+DB_NAME=yourdatabase
+```
+
+## Step 6: Install Dependencies
+Run the following command to install required packages:
+```sh
+npm install express dotenv mysql2 nodemon
+```
+
+## Step 7: Start the Server
+Run the following command to start your server with **nodemon**:
+```sh
+nodemon server.js
+```
+
+### API Endpoints:
+| Method | Endpoint            | Description |
+|--------|---------------------|-------------|
+| GET    | `/api/v1/student/getall`  | Get all students |
+| GET    | `/api/v1/student/get/:id` | Get a student by ID |
+| POST   | `/api/v1/student/create`  | Create a new student |
+| PUT    | `/api/v1/student/update/:id` | Update a student |
+| DELETE | `/api/v1/student/delete/:id` | Delete a student |
+
+
+
 
