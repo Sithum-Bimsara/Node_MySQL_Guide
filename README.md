@@ -299,28 +299,9 @@ NODE+MYSQL+CRUD/
 │-- server.js
 ```
 
-## Step 1: Configure Database Connection (`config/db.js`)
-```javascript
-const mysql = require("mysql2/promise");
-const dotenv = require("dotenv");
 
-// Configure dotenv
-dotenv.config();
 
-const pool = mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS,
-    database: process.env.DB_NAME,
-    waitForConnections: true,
-    connectionLimit: 10,
-    queueLimit: 0
-});
-
-module.exports = pool;
-```
-
-## Step 2: Create Controller (`controllers/studentController.js`)
+## 10 : Create Controller (`controllers/studentController.js`)
 ```javascript
 const db = require("../config/db");
 
@@ -407,7 +388,7 @@ const deleteStudent = async (req, res) => {
 module.exports = { getStudents, getStudentsByID, createStudent, updateStudent, deleteStudent };
 ```
 
-## Step 3: Define Routes (`routes/studentRoutes.js`)
+## 11 : Define Routes (`routes/studentRoutes.js`)
 ```javascript
 const express = require('express');
 const { getStudents, getStudentsByID, createStudent, updateStudent, deleteStudent } = require('../controllers/studentController');
@@ -424,7 +405,7 @@ router.delete('/delete/:id', deleteStudent);
 module.exports = router;
 ```
 
-## Step 4: Configure Server (`server.js`)
+## 12 : Configure Server (`server.js`)
 ```javascript
 const express = require("express");
 const dotenv = require("dotenv");
@@ -458,25 +439,14 @@ mySqlPool.query('SELECT 1').then(() => {
 });
 ```
 
-## Step 5: Setup Environment Variables (`.env`)
-```plaintext
-PORT=8080
-DB_HOST=localhost
-DB_USER=root
-DB_PASS=yourpassword
-DB_NAME=yourdatabase
-```
 
-## Step 6: Install Dependencies
-Run the following command to install required packages:
-```sh
-npm install express dotenv mysql2 nodemon
-```
 
-## Step 7: Start the Server
+
+
+## Step 13: Start the Server
 Run the following command to start your server with **nodemon**:
 ```sh
-nodemon server.js
+npm run server
 ```
 
 ### API Endpoints:
